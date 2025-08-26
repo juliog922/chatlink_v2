@@ -1,0 +1,163 @@
+x-logging: &json_file_logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ./.env
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    logging: *json_file_logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    
+  
+  flyway:
+    image: flyway/flyway:10-alpine
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      -url=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      -user=${POSTGRES_USER}
+      -password=${POSTGRES_PASSWORD}
+      -connectRetries=60
+      -locations=filesystem:/flyway/sql
+      migrate
+    volumes:
+      - "./db/migrations:/flyway/sql:ro"
+    restart: "no"
+
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    logging: *json_file_logging
+    env_file:
+      - ./.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    
+
+  ollama:
+    image: ollama/ollama:latest
+    # or: build: { context: ./ollama, dockerfile: Dockerfile }
+    env_file:
+      - ./.env
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:11434/api/tags >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  
+  ollama-init:
+    image: curlimages/curl:8.8.0
+    depends_on:
+      ollama:
+        condition: service_started
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODELS: "llama3:latest"
+    entrypoint: ["/bin/sh","-c"]
+    command: >
+      'set -eu;
+       IFS=","; for MODEL in $${OLLAMA_MODELS}; do
+         echo "[ollama-init] solicitando pull de $$MODEL";
+         # intentos con reintentos y backoff simple
+         n=0; until [ $$n -ge 15 ]; do
+           # comprueba que la API responde
+           if curl -fsS "$${OLLAMA_HOST}/api/tags" >/dev/null; then
+             # dispara el pull vía API
+             if curl -fsS -X POST "$${OLLAMA_HOST}/api/pull" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"name\":\"$$MODEL\"}"; then
+               echo "[ollama-init] pull de $$MODEL completado";
+               break
+             fi
+           fi
+           n=$$((n+1)); sleep $$((2 + n));  # backoff incremental
+           echo "[ollama-init] reintentando ($$n/15) $$MODEL...";
+         done;
+         if [ $$n -ge 15 ]; then
+           echo "[ollama-init] ERROR: no se pudo descargar $$MODEL" >&2; exit 1;
+         fi
+       done'
+    restart: "no"
+
+  
+  whatsapp_bot:
+    build:
+      context: ./whatsapp_bot
+      dockerfile: Dockerfile.uv
+    container_name: whatsapp-bot
+    logging: *json_file_logging
+    depends_on:
+      db:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    env_file:
+      - ./.env
+    volumes:
+      - ./whatsapp_bot/media:/app/media
+      - paddleocr-cache:/root/.paddleocr
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  
+  whatsmeow_go:
+    build:
+      context: ./whatsmeow_go           # ajusta a la ruta real de tu servicio Go
+      dockerfile: Dockerfile
+    logging: *json_file_logging
+    depends_on:
+      db:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+    env_file:
+      - ./.env
+    ports:
+      - "50051:50051"
+    restart: unless-stopped
+
+volumes:
+  dbdata:
+  paddleocr-cache:
+  ollama:
+  logs:

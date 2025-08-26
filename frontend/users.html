@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Kapalua Chatbot · Usuarios</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+  <link rel="icon" type="image/png" href="/images/kapalua_icon.png">
+</head>
+<body>
+  <a href="/logs" class="corner-logs" title="Ver logs">Logs</a> <!-- ← NUEVO -->
+
+  <header class="topbar">
+    <img src="/images/kapalua_icon.png" alt="Kapalua" class="logo">
+    <h1>Kapalua Chatbot — Usuarios</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Crear usuario</h2>
+      <form id="createForm">
+        <label>Teléfono <input id="phone" required /></label>
+        <label>Email <input id="email" type="email" required /></label>
+        <label>Nombre <input id="name" /></label>
+        <label>Rol
+          <select id="role" required>
+            <option value="user" selected>user</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <button type="submit">Crear</button>
+      </form>
+      <p id="msg" class="msg"></p>
+    </section>
+
+    <section class="card">
+      <h2>Usuarios</h2>
+      <table id="users">
+        <thead>
+          <tr><th>ID</th><th>Phone</th><th>Email</th><th>Name</th><th>Role</th><th>Acciones</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/scripts/users.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Kapalua Chatbot · Logs</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+  <link rel="icon" type="image/png" href="/images/kapalua_icon.png">
+  <style>
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .toolbar label { margin: 0; }
+    .toolbar input, .toolbar select { max-width: 220px; }
+    .results { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#0c0c0c; border:1px solid #333; border-radius:8px; padding:12px; max-height: 65vh; overflow:auto; }
+    .hint { font-size: 12px; color: #aaa; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <img src="/images/kapalua_icon.png" alt="Kapalua" class="logo">
+    <h1>Kapalua Chatbot — Logs</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="toolbar">
+        <label>Servicio
+          <select id="service"></select>
+        </label>
+        <label>Fecha
+          <input id="day" type="date" />
+        </label>
+        <label>Filtro
+          <input id="pattern" placeholder="ERROR, phone, etc." />
+        </label>
+        <label>Límite
+          <input id="limit" type="number" value="1000" min="1" max="20000" />
+        </label>
+        <button id="btnFetch">Buscar</button>
+        <a href="/users" class="corner-logs" style="position:static">↩ Usuarios</a>
+      </div>
+      <p id="msg" class="msg"></p>
+      <div id="out" class="results"></div>
+      <div class="hint">Consejo: ajusta el <b>Filtro</b> y <b>Límite</b> para reducir volumen.</div>
+    </section>
+  </main>
+
+  <script src="/scripts/logs.js"></script>
+</body>
+</html>

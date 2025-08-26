@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Kapalua Chatbot · Login</title>
+  <link rel="stylesheet" href="/styles/main.css" />
+  <link rel="icon" type="image/png" href="/images/kapalua_icon.png">
+</head>
+<body>
+  <header class="topbar">
+    <img src="/images/kapalua_icon.png" alt="Kapalua" class="logo">
+    <h1>Kapalua Chatbot</h1>
+  </header>
+
+  <main class="card">
+    <h2>Iniciar sesión</h2>
+    <form id="loginForm">
+      <label>Usuario <input id="username" autocomplete="username" required /></label>
+      <label>Contraseña <input id="password" type="password" autocomplete="current-password" required /></label>
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="msg" class="msg"></p>
+  </main>
+
+  <script src="/scripts/login.js"></script>
+</body>
+</html>

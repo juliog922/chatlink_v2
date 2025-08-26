@@ -1,0 +1,99 @@
+# ==============================
+# General
+# ==============================
+# SO
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.history/
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+tags
+
+# Bin
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.o
+*.obj
+*.class
+
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+
+# venv
+.venv/
+venv/
+ENV/
+env/
+
+# env
+.env
+.env.*
+!.env.example
+
+# packing
+build/
+dist/
+pip-wheel-metadata/
+*.egg-info/
+.eggs/
+
+# cache
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.nox/
+.tox/
+.cache/
+
+# Tools
+.mypy_cache/
+.pytype/
+.pyre/
+.ruff_cache/
+.pyright/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ==============================
+# Rust
+# ==============================
+# compile
+/target/
+**/target/
+
+# ==============================
+# Go
+# ==============================
+# test/coverage
+**/*.test
+coverage.out
+*.coverprofile
+
+# builds
+bin/

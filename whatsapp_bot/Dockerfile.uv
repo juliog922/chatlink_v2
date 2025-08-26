@@ -1,0 +1,70 @@
+# Imagen oficial UV + Python 3.10 (Debian 12)
+FROM ghcr.io/astral-sh/uv:python3.10-bookworm
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# --- SO: dependencias necesarias ---
+# - ODBC (pyodbc) + build tools
+# - librerías típicas que usan los wheels de vosk/numPy/etc.
+RUN set -eux; \
+    apt-get update; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      curl \
+      gnupg \
+      unixodbc unixodbc-dev \
+      libgssapi-krb5-2 \
+      libgomp1 libopenblas0 libgfortran5 \
+      libssl3 libstdc++6 \
+      libgl1 libglib2.0-0 \
+      procps \
+      ffmpeg \
+    ; \
+    rm -rf /var/lib/apt/lists/*
+
+# --- Driver SQL Server (msodbcsql17) ---
+# Intento 1: instalar el .deb local (si existe en el contexto de build)
+# Si no existe o falla, se instala desde el repo oficial de Microsoft
+COPY msodbcsql17_17.10.6.1-1_amd64.deb /tmp/msodbcsql17.deb
+RUN set -eux; \
+    if [ -s /tmp/msodbcsql17.deb ]; then \
+      echo "Instalando msodbcsql17 desde .deb local..."; \
+      ACCEPT_EULA=Y dpkg -i /tmp/msodbcsql17.deb || true; \
+      apt-get update; \
+      DEBIAN_FRONTEND=noninteractive apt-get -f install -y; \
+    fi; \
+    if ! dpkg -s msodbcsql17 >/dev/null 2>&1; then \
+      echo "Fallo o no hay .deb; instalando msodbcsql17 desde repo MS..."; \
+      curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg; \
+      echo "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/microsoft-prod.list; \
+      apt-get update; \
+      ACCEPT_EULA=Y DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends msodbcsql17; \
+      rm -rf /var/lib/apt/lists/*; \
+    fi; \
+    rm -f /tmp/msodbcsql17.deb || true
+
+# --- capas cacheables de Python (uv) ---
+# Copiamos lockfiles para aprovechar cache
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+# --- código de la app ---
+COPY . .
+
+# --- modelo Vosk en la imagen (como pediste) ---
+COPY vosk_model_es /app/vosk_model_es
+
+# usar la venv creada por uv
+ENV PATH="/app/.venv/bin:${PATH}"
+
+# expón el puerto sólo si tu app abre HTTP (si no, no pasa nada)
+EXPOSE 8000
+
+# Arranque: ejecuta el comando CLI "listen"
+CMD ["/bin/bash", "-lc", "uv run python manage.py start"]
+
