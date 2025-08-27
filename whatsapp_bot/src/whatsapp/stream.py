@@ -133,6 +133,7 @@ def store_message_if_applicable(
     direction = "received" if matched_cliente else None
 
     if not matched_cliente:
+        logging.info("Is client Message")
         matched_cliente = Cliente.get_by_telefono(sqlserver_session, receiver)
         direction = "sent" if matched_cliente else None
 
